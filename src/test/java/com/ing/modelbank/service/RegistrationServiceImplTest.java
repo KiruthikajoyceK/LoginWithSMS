@@ -1,5 +1,6 @@
 package com.ing.modelbank.service;
 
+import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
@@ -11,7 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.google.common.base.Optional;
 import com.ing.modelbank.dto.RegistrationRequest;
@@ -33,13 +33,9 @@ public class RegistrationServiceImplTest {
 	RegistrationRequest registrationRequest;
 
 	Customer customer;
-	Customer customerrr;
-
-	@Value("${password.length}")
-	private String passwordLength;
 
 	@Before
-	public void setup() {
+	public void setup() throws IllegalAccessException, InvocationTargetException {
 
 		registrationRequest = new RegistrationRequest();
 		registrationRequest.setCustomerName("kiruthika");
@@ -52,10 +48,6 @@ public class RegistrationServiceImplTest {
 		customer.setMobileNo(7867947568L);
 		customer.setPassword("f704a5fe");
 		customer.setCustomerName("kiruthika");
-		customerrr = new Customer();
-		customerrr.setMobileNo(customer.getMobileNo());
-		customerrr.setPassword(customer.getPassword());
-		customerrr.setCustomerName(customer.getCustomerName());
 		registrationResponse = new RegistrationResponse();
 		registrationResponse.setStatusCode(201);
 	}
@@ -70,4 +62,12 @@ public class RegistrationServiceImplTest {
 
 	}
 
+	@Test
+	public void testRegistration1() throws NoSuchAlgorithmException, ParseException {
+
+		Mockito.when(customerRepository.findByEmail(registrationRequest.getEmail())).thenReturn(Optional.absent());
+		RegistrationResponse actual = registrationServiceImpl.registration(registrationRequest);
+		Assert.assertEquals(registrationResponse.getCustomerId(), actual.getCustomerId());
+
+	}
 }

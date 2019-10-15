@@ -1,6 +1,5 @@
 package com.ing.modelbank.service;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
@@ -19,9 +18,6 @@ import com.ing.modelbank.entity.Customer;
 import com.ing.modelbank.exception.UserExistException;
 import com.ing.modelbank.repository.CustomerRepository;
 import com.ing.modelbank.util.ModelBankUtils;
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
 
 /**
  * @author KiruthikaK
@@ -57,7 +53,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 		}
 
 		modelBankUtils = new ModelBankUtils();
-		String password = generatePassword(registrationRequest.getCustomerName());
+		String password = modelBankUtils.generatePassword(registrationRequest.getCustomerName());
 		customer = new Customer();
 		customer.setDob(registrationRequest.getDob());
 		customer.setCity(registrationRequest.getCity());
@@ -69,40 +65,13 @@ public class RegistrationServiceImpl implements RegistrationService {
 		customer.setEmail(registrationRequest.getEmail());
 		customer.setMobileNo(registrationRequest.getMobileNo());
 		customer.setPassword(password);
-		Customer customerrr = customerRepository.save(customer);
+		customerRepository.save(customer);
 
-		sendSms(customerrr.getCustomerName(), customerrr.getPassword(), customerrr.getMobileNo());
+		modelBankUtils.sendSms(customer.getCustomerName(), customer.getPassword(), customer.getMobileNo());
 		registrationResponse = new RegistrationResponse();
-		registrationResponse.setCustomerId(customerrr.getCustomerId());
+		registrationResponse.setCustomerId(customer.getCustomerId());
 
 		return registrationResponse;
-	}
-
-	public String generatePassword(String passwordToHash) throws NoSuchAlgorithmException {
-
-		String generatedPassword = null;
-		MessageDigest md = MessageDigest.getInstance("MD5");
-		md.update(passwordToHash.getBytes());
-		byte[] bytes = md.digest();
-		StringBuilder sb = new StringBuilder();
-
-		for (int i = 0; i < bytes.length; i++) {
-			sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
-		}
-
-		generatedPassword = sb.toString();
-		return generatedPassword.substring(0, Integer.parseInt(ModelBankConstants.PASSWORD_LENGTH));
-	}
-
-	public String sendSms(String userName, String passWord, Long phoneNumber) {
-
-		Twilio.init(ModelBankConstants.ACCOUNT_SID, ModelBankConstants.AUTH_TOKEN);
-		Message message = Message
-				.creator(new PhoneNumber(ModelBankConstants.MOBILE + phoneNumber),
-						new PhoneNumber(ModelBankConstants.TWILIO), userName + ModelBankConstants.INFO + passWord)
-				.create();
-
-		return message.getBody();
 	}
 
 }
